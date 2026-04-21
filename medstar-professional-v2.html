@@ -1,0 +1,1634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedStar Load Leveling Tool - Enterprise Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #003D7A;
+            --primary-light: #005BA8;
+            --secondary: #00A3E0;
+            --secondary-dark: #0089B8;
+            --accent: #78C850;
+            --success: #10B981;
+            --warning: #F39200;
+            --danger: #EF4444;
+            --light: #F8FAFC;
+            --dark: #0F172A;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-300: #D1D5DB;
+            --gray-400: #9CA3AF;
+            --gray-500: #6B7280;
+            --gray-600: #4B5563;
+            --gray-700: #374151;
+            --white: #FFFFFF;
+        }
+
+        html, body {
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+            background: var(--light);
+            color: var(--gray-700);
+        }
+
+        /* LOGIN STYLES */
+        .login-wrapper {
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 50%, var(--secondary) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-wrapper::before {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            top: -100px;
+            left: -100px;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .login-wrapper::after {
+            content: '';
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            bottom: -50px;
+            right: -50px;
+            animation: float 8s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(30px); }
+        }
+
+        .login-card {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 50px 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            max-width: 450px;
+            width: 100%;
+            position: relative;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .login-logo {
+            font-size: 64px;
+            margin-bottom: 20px;
+            display: block;
+            animation: slideDown 0.6s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-card h1 {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .login-card p {
+            color: var(--gray-500);
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .corporate-address {
+            font-size: 13px;
+            color: var(--gray-600);
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            color: var(--gray-700);
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: var(--gray-700);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 4px rgba(0, 163, 224, 0.1);
+            background: rgba(0, 163, 224, 0.02);
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            color: var(--white);
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 163, 224, 0.3);
+        }
+
+        .login-button:active {
+            transform: translateY(0);
+        }
+
+        .error-message {
+            color: var(--danger);
+            font-size: 14px;
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 8px;
+            border-left: 4px solid var(--danger);
+            display: none;
+            animation: shake 0.3s ease-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .demo-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, rgba(0, 163, 224, 0.1), rgba(120, 200, 80, 0.1));
+            border: 1px solid var(--secondary);
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 12px;
+            color: var(--primary);
+            font-weight: 600;
+            text-align: center;
+            width: 100%;
+        }
+
+        /* MAIN APP STYLES */
+        .app-wrapper {
+            display: flex;
+            height: 100vh;
+            background: var(--light);
+        }
+
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, var(--primary) 0%, var(--primary-light) 100%);
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+            overflow-y: auto;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            left: 0;
+        }
+
+        .sidebar.collapsed {
+            width: 80px;
+        }
+
+        .sidebar.collapsed .sidebar-text {
+            display: none;
+        }
+
+        .sidebar-header {
+            padding: 32px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar.collapsed .sidebar-header {
+            padding: 20px 12px;
+        }
+
+        .sidebar-logo {
+            font-size: 28px;
+            margin-bottom: 12px;
+        }
+
+        .sidebar-logo-text {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .sidebar-title {
+            color: var(--white);
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .sidebar-subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 24px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-item {
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: none;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            white-space: nowrap;
+        }
+
+        .sidebar.collapsed .nav-item {
+            padding: 12px;
+            justify-content: center;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--white);
+        }
+
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--white);
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-icon {
+            font-size: 20px;
+            width: 24px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .nav-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar.collapsed .nav-text {
+            display: none;
+        }
+
+        .sidebar-footer {
+            padding: 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .sidebar.collapsed .sidebar-footer {
+            padding: 16px 8px;
+            font-size: 10px;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            display: flex;
+            flex-direction: column;
+            width: calc(100% - 280px);
+            height: 100vh;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .main-content.expanded {
+            margin-left: 80px;
+            width: calc(100% - 80px);
+        }
+
+        .topbar {
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+            padding: 24px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex: 1;
+        }
+
+        .menu-toggle {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: all 0.3s;
+            display: none;
+        }
+
+        .menu-toggle:hover {
+            background: var(--gray-100);
+            color: var(--secondary);
+        }
+
+        .topbar-left h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .topbar-right {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .logout-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, var(--warning), #D97706);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(243, 146, 0, 0.3);
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 32px 40px;
+        }
+
+        .content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .content::-webkit-scrollbar-thumb {
+            background: var(--gray-300);
+            border-radius: 4px;
+        }
+
+        .content::-webkit-scrollbar-thumb:hover {
+            background: var(--gray-400);
+        }
+
+        /* DASHBOARD GRID */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+            border: 1px solid var(--gray-100);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--secondary), var(--primary));
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+            border-color: var(--secondary);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 16px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--gray-500);
+        }
+
+        .stat-icon {
+            font-size: 28px;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .stat-change {
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .stat-change.positive {
+            color: var(--success);
+        }
+
+        .stat-change.negative {
+            color: var(--warning);
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(180deg, var(--secondary), var(--primary));
+            border-radius: 2px;
+        }
+
+        /* HOSPITAL GRID */
+        .hospital-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .hospital-card {
+            background: var(--white);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+            border: 1px solid var(--gray-100);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .hospital-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.1);
+            border-color: var(--secondary);
+        }
+
+        .hospital-card-header {
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            padding: 24px;
+            color: var(--white);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hospital-card-header::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200px;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+
+        .hospital-code {
+            font-size: 24px;
+            font-weight: 700;
+            position: relative;
+            z-index: 2;
+        }
+
+        .hospital-card-body {
+            padding: 24px;
+        }
+
+        .hospital-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+
+        .hospital-info {
+            font-size: 13px;
+            color: var(--gray-500);
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .hospital-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            padding-top: 16px;
+            border-top: 1px solid var(--gray-100);
+        }
+
+        .metric {
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .metric-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--gray-500);
+            letter-spacing: 0.5px;
+        }
+
+        /* PERFORMANCE RANKINGS */
+        .ranking-item {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--gray-100);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ranking-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, var(--secondary), var(--primary));
+        }
+
+        .ranking-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .ranking-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 1;
+        }
+
+        .ranking-medal {
+            font-size: 28px;
+            min-width: 40px;
+        }
+
+        .ranking-text h3 {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .ranking-text p {
+            font-size: 13px;
+            color: var(--gray-500);
+        }
+
+        .ranking-score {
+            background: linear-gradient(135deg, rgba(0, 163, 224, 0.1), rgba(120, 200, 80, 0.1));
+            border: 2px solid var(--secondary);
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--primary);
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--gray-200);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary), var(--primary));
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 3px;
+        }
+
+        /* FORMS */
+        .form-select, .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--gray-200);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+            color: var(--gray-700);
+        }
+
+        .form-select:focus, .form-input:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 4px rgba(0, 163, 224, 0.1);
+        }
+
+        /* UPLOAD ZONE */
+        .upload-zone {
+            border: 2px dashed var(--secondary);
+            border-radius: 16px;
+            padding: 60px 40px;
+            text-align: center;
+            cursor: pointer;
+            background: linear-gradient(135deg, rgba(0, 163, 224, 0.05), rgba(120, 200, 80, 0.05));
+            transition: all 0.3s;
+            margin-bottom: 24px;
+        }
+
+        .upload-zone:hover {
+            background: linear-gradient(135deg, rgba(0, 163, 224, 0.1), rgba(120, 200, 80, 0.1));
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .upload-icon {
+            font-size: 56px;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .upload-zone h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .upload-zone p {
+            color: var(--gray-500);
+            font-size: 14px;
+        }
+
+        /* SUCCESS MESSAGE */
+        .success-message {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(120, 200, 80, 0.1));
+            border: 2px solid var(--success);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .success-message h4 {
+            color: var(--success);
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .success-message p {
+            color: var(--gray-600);
+            font-size: 14px;
+            margin: 4px 0;
+        }
+
+        /* DIRECTORY */
+        .directory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .contact-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--gray-100);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s;
+        }
+
+        .contact-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+            border-color: var(--secondary);
+        }
+
+        .contact-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .contact-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--secondary);
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .contact-info {
+            font-size: 13px;
+            color: var(--gray-600);
+            line-height: 1.6;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 1024px) {
+            .topbar {
+                padding: 20px 24px;
+            }
+
+            .content {
+                padding: 24px;
+            }
+
+            .menu-toggle {
+                display: block;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+
+            .hospital-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                height: 100vh;
+                z-index: 200;
+                transform: translateX(-100%);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+                box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+            }
+
+            .sidebar.collapsed {
+                transform: translateX(-100%);
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .main-content.expanded {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .topbar {
+                padding: 16px 20px;
+            }
+
+            .topbar-left h1 {
+                font-size: 20px;
+            }
+
+            .topbar-left p {
+                font-size: 12px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hospital-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .directory-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .logout-btn {
+                width: 100%;
+            }
+
+            .upload-zone {
+                padding: 40px 20px;
+            }
+
+            .ranking-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .ranking-score {
+                width: 100%;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .topbar-left {
+                gap: 12px;
+            }
+
+            .topbar-left h1 {
+                font-size: 18px;
+            }
+
+            .section-title {
+                font-size: 20px;
+            }
+
+            .stat-card {
+                padding: 20px;
+            }
+
+            .stat-value {
+                font-size: 28px;
+            }
+
+            .hospital-metrics {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" class="login-wrapper">
+    <div class="login-card">
+        <div class="login-header">
+            <div style="font-size: 11px; color: var(--gray-500); margin-bottom: 16px; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600;">Corporate Headquarters</div>
+            <span class="login-logo">🏥</span>
+            <h1>MedStar</h1>
+            <p style="margin-bottom: 12px;">Enterprise Load Leveling Management System</p>
+            <div class="corporate-address">
+                10980 Grantchester Way<br>
+                Columbia, MD 21044
+            </div>
+        </div>
+
+        <form onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label class="form-label">Security Passphrase</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    class="form-input"
+                    placeholder="••••••••••••••••"
+                    autocomplete="off"
+                >
+            </div>
+            <button type="submit" class="login-button">🔓 Access Dashboard</button>
+        </form>
+
+        <div id="errorMessage" class="error-message"></div>
+
+        <div class="login-footer">
+            <div class="demo-badge">
+                Demo: medstar2024
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MAIN APPLICATION -->
+<div id="appScreen" class="app-wrapper hidden">
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div style="display: flex; flex-direction: column; gap: 4px; flex: 1;">
+                <div class="sidebar-logo">🏥</div>
+                <div class="sidebar-logo-text">
+                    <div class="sidebar-title">MedStar</div>
+                    <div class="sidebar-subtitle">System</div>
+                </div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <button class="nav-item active" onclick="showTab('dashboard')">
+                <span class="nav-icon">📊</span>
+                <span class="nav-text">Dashboard</span>
+            </button>
+            <button class="nav-item" onclick="showTab('performance')">
+                <span class="nav-icon">📈</span>
+                <span class="nav-text">Performance</span>
+            </button>
+            <button class="nav-item" onclick="showTab('hospitals')">
+                <span class="nav-icon">🏥</span>
+                <span class="nav-text">Hospitals</span>
+            </button>
+            <button class="nav-item" onclick="showTab('reports')">
+                <span class="nav-icon">📄</span>
+                <span class="nav-text">Reports</span>
+            </button>
+            <button class="nav-item" onclick="showTab('directory')">
+                <span class="nav-icon">👥</span>
+                <span class="nav-text">Directory</span>
+            </button>
+            <button class="nav-item" onclick="showTab('upload')">
+                <span class="nav-icon">⬆️</span>
+                <span class="nav-text">Upload</span>
+            </button>
+        </nav>
+
+        <div class="sidebar-footer">
+            <strong>v2.6.0</strong><br>
+            <span class="sidebar-text">Enterprise Edition</span>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content" id="mainContent">
+        <!-- TOPBAR -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+                <div>
+                    <h1>MedStar Load Leveling</h1>
+                    <p id="subtitle" style="color: var(--gray-500); font-size: 14px;">Dashboard Overview</p>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+            </div>
+        </div>
+
+        <!-- CONTENT AREA -->
+        <div class="content">
+
+            <!-- DASHBOARD TAB -->
+            <div id="dashboard" class="tab-content">
+                <div class="dashboard-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-label">Total Hospitals</div>
+                            <div class="stat-icon">🏥</div>
+                        </div>
+                        <div class="stat-value">10</div>
+                        <div class="stat-change positive">↑ 2 new this quarter</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-label">Active PMs</div>
+                            <div class="stat-icon">⚙️</div>
+                        </div>
+                        <div class="stat-value">75</div>
+                        <div class="stat-change positive">↑ 12% vs last month</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-label">Completed (MTD)</div>
+                            <div class="stat-icon">✅</div>
+                        </div>
+                        <div class="stat-value">220</div>
+                        <div class="stat-change positive">↑ On track</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-label">Avg Completion</div>
+                            <div class="stat-icon">📊</div>
+                        </div>
+                        <div class="stat-value">88.5%</div>
+                        <div class="stat-change positive">↑ 3.2% improvement</div>
+                    </div>
+                </div>
+
+                <div class="section-title">System Overview</div>
+                <div class="hospital-grid" id="hospitalGrid"></div>
+            </div>
+
+            <!-- PERFORMANCE TAB -->
+            <div id="performance" class="tab-content hidden">
+                <div class="section-title">Hospital Performance Rankings</div>
+                <div id="performanceList"></div>
+            </div>
+
+            <!-- HOSPITALS TAB -->
+            <div id="hospitals" class="tab-content hidden">
+                <div class="form-group">
+                    <label class="form-label">Select Facility</label>
+                    <select id="hospitalSelect" class="form-select" onchange="showHospitalDetail(this.value)">
+                        <option value="MWHC">MWHC - Washington Hospital Center</option>
+                        <option value="MGUH">MGUH - Georgetown University Hospital</option>
+                        <option value="MFSMC">MFSMC - Franklin Square Medical Center</option>
+                        <option value="MGSH">MGSH - Good Samaritan Hospital</option>
+                        <option value="MHH">MHH - Harbor Hospital</option>
+                        <option value="MMMC">MMMC - Montgomery Medical Center</option>
+                        <option value="MNRH">MNRH - National Rehabilitation Hospital</option>
+                        <option value="MSMH">MSMH - St. Mary's Hospital</option>
+                        <option value="MSMHC">MSMHC - Southern Maryland Medical Center</option>
+                        <option value="MUMH">MUMH - Union Memorial Hospital</option>
+                    </select>
+                </div>
+                <div id="hospitalDetail"></div>
+            </div>
+
+            <!-- REPORTS TAB -->
+            <div id="reports" class="tab-content hidden">
+                <div class="form-group">
+                    <label class="form-label">Report Type</label>
+                    <select id="reportSelect" class="form-select" onchange="generateReport(this.value)">
+                        <option value="ALL">System-Wide Report</option>
+                        <option value="MWHC">MWHC - Washington Hospital Center</option>
+                        <option value="MGUH">MGUH - Georgetown University Hospital</option>
+                        <option value="MFSMC">MFSMC - Franklin Square Medical Center</option>
+                        <option value="MGSH">MGSH - Good Samaritan Hospital</option>
+                        <option value="MHH">MHH - Harbor Hospital</option>
+                        <option value="MMMC">MMMC - Montgomery Medical Center</option>
+                        <option value="MNRH">MNRH - National Rehabilitation Hospital</option>
+                        <option value="MSMH">MSMH - St. Mary's Hospital</option>
+                        <option value="MSMHC">MSMHC - Southern Maryland Medical Center</option>
+                        <option value="MUMH">MUMH - Union Memorial Hospital</option>
+                    </select>
+                </div>
+                <div id="reportContent"></div>
+            </div>
+
+            <!-- DIRECTORY TAB -->
+            <div id="directory" class="tab-content hidden">
+                <div class="section-title">Executive Directory</div>
+                <div class="directory-grid" id="directoryList"></div>
+            </div>
+
+            <!-- UPLOAD TAB -->
+            <div id="upload" class="tab-content hidden">
+                <div class="form-group">
+                    <label class="form-label">Target Facility</label>
+                    <select id="uploadHospitalSelect" class="form-select">
+                        <option value="MWHC">MWHC - Washington Hospital Center</option>
+                        <option value="MGUH">MGUH - Georgetown University Hospital</option>
+                        <option value="MFSMC">MFSMC - Franklin Square Medical Center</option>
+                        <option value="MGSH">MGSH - Good Samaritan Hospital</option>
+                        <option value="MHH">MHH - Harbor Hospital</option>
+                        <option value="MMMC">MMMC - Montgomery Medical Center</option>
+                        <option value="MNRH">MNRH - National Rehabilitation Hospital</option>
+                        <option value="MSMH">MSMH - St. Mary's Hospital</option>
+                        <option value="MSMHC">MSMHC - Southern Maryland Medical Center</option>
+                        <option value="MUMH">MUMH - Union Memorial Hospital</option>
+                    </select>
+                </div>
+
+                <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+                    <span class="upload-icon">📤</span>
+                    <h3>Upload Asset Data</h3>
+                    <p>Drag and drop your file or click to browse</p>
+                </div>
+                <input type="file" id="fileInput" style="display: none;" onchange="handleFileUpload(event)">
+                <div id="uploadStatus"></div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    const CORRECT_PASSWORD = "Twine5100";
+
+    const hospitals = {
+        MWHC: { name: 'Washington Hospital Center', completion: 89, onTime: 94, address: '110 Irving Street NW, Washington DC 20010', director: 'Ryan Ollie', phone: '847-421-7584' },
+        MGUH: { name: 'Georgetown University Hospital', completion: 91, onTime: 96, address: '3800 Reservoir Road NW, Washington DC 20007', director: 'Ryan Boughner', phone: '202-444-0517' },
+        MFSMC: { name: 'Franklin Square Medical Center', completion: 87, onTime: 92, address: '9000 Franklin Square Drive, Baltimore MD 21237', director: 'Ryan Stoots', phone: '443-653-2018' },
+        MGSH: { name: 'Good Samaritan Hospital', completion: 93, onTime: 98, address: '5601 Loch Raven Blvd., Baltimore MD 21239', director: 'James Yap', phone: '443-703-8972' },
+        MHH: { name: 'Harbor Hospital', completion: 85, onTime: 88, address: '3001 South Hanover Street, Baltimore MD 21225', director: 'Bob Decker', phone: '443-699-3142' },
+        MMMC: { name: 'Montgomery Medical Center', completion: 88, onTime: 91, address: '18101 Prince Philip Drive, Olney MD 20832', director: 'Bob Dickey', phone: '202-731-0975' },
+        MNRH: { name: 'National Rehabilitation Hospital', completion: 92, onTime: 97, address: '102 Irving Street NW, Washington DC 20010', director: 'George Saoutis', phone: '202-345-4531' },
+        MSMH: { name: 'St. Mary\'s Hospital', completion: 84, onTime: 86, address: '25500 Point Lookout Road, Leonardtown, MD 20650', director: 'Ramon Solomon', phone: '301-475-6013' },
+        MSMHC: { name: 'Southern Maryland Medical Center', completion: 90, onTime: 95, address: '7503 Surratts Road, Clinton MD 20735', director: 'Brandon Myers', phone: '240-346-4038' },
+        MUMH: { name: 'Union Memorial Hospital', completion: 86, onTime: 89, address: '201 East University Parkway, Baltimore MD 21218', director: 'Sam Mirmirani', phone: '703-431-4115' }
+    };
+
+    const directory = [
+        { name: 'Chris Spanos', title: 'Sr VP Operations, Crothall', phone: '603-493-1427', email: 'chris.spanos@crothall.com' },
+        { name: 'Nick Queensland', title: 'VP Operations', phone: '507-273-6348', email: 'nick.queensland@crothall.com' },
+        { name: 'Antoine Riley', title: 'System Maintenance Director', phone: '484-475-5596', email: 'antoine.riley@crothall.com' },
+        { name: 'Heather West', title: 'Infrastructure Director', phone: '804-464-7328', email: 'heather.west@crothall.com' },
+        { name: 'Camryn Honesty', title: 'Technology Manager', phone: '301-332-7804', email: 'camryn.honesty@crothall.com' },
+        { name: 'Michael Soforenko', title: 'Energy Manager', phone: '443-845-0615', email: 'michael.soforenko@crothall.com' },
+        { name: 'Ken Blackwell', title: 'Compliance Manager', phone: '301-821-0344', email: 'ken.blackwell@crothall.com' }
+    ];
+
+    let sidebarCollapsed = false;
+
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        sidebarCollapsed = !sidebarCollapsed;
+        
+        if (sidebarCollapsed) {
+            sidebar.classList.add('collapsed');
+            mainContent.classList.add('expanded');
+        } else {
+            sidebar.classList.remove('collapsed');
+            mainContent.classList.remove('expanded');
+        }
+
+        // Close sidebar on mobile when toggling
+        if (window.innerWidth <= 768) {
+            sidebar.classList.toggle('open');
+        }
+    }
+
+    function handleLogin(event) {
+        event.preventDefault();
+        const password = document.getElementById('password').value;
+        const errorMsg = document.getElementById('errorMessage');
+
+        if (password === CORRECT_PASSWORD) {
+            sessionStorage.setItem('medstarLoggedIn', 'true');
+            showApp();
+            initApp();
+        } else {
+            errorMsg.textContent = '⚠️ Invalid passphrase. Please try again.';
+            errorMsg.classList.add('show');
+            document.getElementById('password').value = '';
+        }
+    }
+
+    function showApp() {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('appScreen').classList.remove('hidden');
+    }
+
+    function logout() {
+        if (confirm('Are you sure you want to logout?')) {
+            sessionStorage.removeItem('medstarLoggedIn');
+            document.getElementById('appScreen').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('password').value = '';
+            document.getElementById('errorMessage').classList.remove('show');
+        }
+    }
+
+    function showTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+        document.getElementById(tabName).classList.remove('hidden');
+        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+        event.target.closest('.nav-item').classList.add('active');
+
+        // Close sidebar on mobile when tab is selected
+        if (window.innerWidth <= 768) {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.remove('open');
+        }
+
+        let subtitle = 'Dashboard Overview';
+        if (tabName === 'hospitals') subtitle = 'Facility Management';
+        if (tabName === 'reports') subtitle = 'Report Generation';
+        if (tabName === 'performance') subtitle = 'Performance Analytics';
+        if (tabName === 'directory') subtitle = 'Executive Directory';
+        if (tabName === 'upload') subtitle = 'Data Upload';
+        document.getElementById('subtitle').textContent = subtitle;
+
+        if (tabName === 'dashboard') loadDashboard();
+        if (tabName === 'performance') loadPerformance();
+        if (tabName === 'directory') loadDirectory();
+    }
+
+    function loadDashboard() {
+        let html = '';
+        for (let code in hospitals) {
+            const h = hospitals[code];
+            const avg = (h.completion + h.onTime) / 2;
+            html += `
+                <div class="hospital-card">
+                    <div class="hospital-card-header">
+                        <div class="hospital-code">${code}</div>
+                    </div>
+                    <div class="hospital-card-body">
+                        <div class="hospital-name">${h.name}</div>
+                        <div class="hospital-info">${h.address}</div>
+                        <div class="hospital-metrics">
+                            <div class="metric">
+                                <span class="metric-value">${h.completion}%</span>
+                                <span class="metric-label">Completion</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-value">${h.onTime}%</span>
+                                <span class="metric-label">On-Time</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-value" style="color: ${avg >= 90 ? '#10B981' : '#F39200'};">${avg.toFixed(0)}%</span>
+                                <span class="metric-label">Overall</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-value">→</span>
+                                <span class="metric-label">Status</span>
+                            </div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${avg}%"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        document.getElementById('hospitalGrid').innerHTML = html;
+    }
+
+    function loadPerformance() {
+        let data = [];
+        for (let code in hospitals) {
+            const h = hospitals[code];
+            const score = (h.completion + h.onTime) / 2;
+            data.push({ code, name: h.name, completion: h.completion, onTime: h.onTime, score });
+        }
+        data.sort((a, b) => b.score - a.score);
+
+        let html = '';
+        data.forEach((h, i) => {
+            const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i+1}`;
+            html += `
+                <div class="ranking-item">
+                    <div class="ranking-info">
+                        <div class="ranking-medal">${medal}</div>
+                        <div class="ranking-text">
+                            <h3>${h.code}</h3>
+                            <p>Completion: ${h.completion}% | On-Time: ${h.onTime}%</p>
+                        </div>
+                    </div>
+                    <div class="ranking-score">${h.score.toFixed(1)}%</div>
+                </div>
+            `;
+        });
+        document.getElementById('performanceList').innerHTML = html;
+    }
+
+    function showHospitalDetail(code) {
+        const h = hospitals[code];
+        const avg = (h.completion + h.onTime) / 2;
+        const html = `
+            <div class="stat-card" style="margin-top: 24px;">
+                <div style="background: linear-gradient(135deg, #00A3E0, #003D7A); color: white; padding: 24px; border-radius: 12px; margin: -24px -24px 24px -24px;">
+                    <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">MedStar ${h.name}</h2>
+                    <p style="margin: 0; opacity: 0.9;">${h.address}</p>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                    <div style="background: #F9FAFB; padding: 16px; border-radius: 8px;">
+                        <p style="font-size: 12px; color: #6B7280; margin: 0 0 8px 0; text-transform: uppercase; font-weight: 600;">Director</p>
+                        <p style="font-size: 16px; font-weight: 700; color: #003D7A; margin: 0;">${h.director}</p>
+                    </div>
+                    <div style="background: #F9FAFB; padding: 16px; border-radius: 8px;">
+                        <p style="font-size: 12px; color: #6B7280; margin: 0 0 8px 0; text-transform: uppercase; font-weight: 600;">Phone</p>
+                        <p style="font-size: 16px; font-weight: 700; color: #003D7A; margin: 0;">${h.phone}</p>
+                    </div>
+                    <div style="background: #F9FAFB; padding: 16px; border-radius: 8px;">
+                        <p style="font-size: 12px; color: #6B7280; margin: 0 0 8px 0; text-transform: uppercase; font-weight: 600;">Completion</p>
+                        <p style="font-size: 16px; font-weight: 700; color: #78C850; margin: 0;">${h.completion}%</p>
+                    </div>
+                    <div style="background: #F9FAFB; padding: 16px; border-radius: 8px;">
+                        <p style="font-size: 12px; color: #6B7280; margin: 0 0 8px 0; text-transform: uppercase; font-weight: 600;">On-Time</p>
+                        <p style="font-size: 16px; font-weight: 700; color: #00A3E0; margin: 0;">${h.onTime}%</p>
+                    </div>
+                </div>
+
+                <div style="background: linear-gradient(135deg, rgba(0, 163, 224, 0.1), rgba(120, 200, 80, 0.1)); border-radius: 8px; padding: 16px;">
+                    <p style="font-size: 12px; color: #003D7A; font-weight: 600; margin: 0 0 8px 0;">OVERALL PERFORMANCE</p>
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div style="font-size: 36px; font-weight: 700; color: #003D7A;">${avg.toFixed(1)}%</div>
+                        <div style="flex: 1;">
+                            <div class="progress-bar" style="height: 8px;">
+                                <div class="progress-fill" style="width: ${avg}%; height: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.getElementById('hospitalDetail').innerHTML = html;
+    }
+
+    function generateReport(type) {
+        let content = '';
+        if (type === 'ALL') {
+            content = '<div class="stat-card"><h2 style="font-size: 24px; color: #003D7A; margin-bottom: 24px;">System-Wide Performance Report</h2>';
+            let avgCompletion = 0, avgOnTime = 0;
+            for (let code in hospitals) {
+                const h = hospitals[code];
+                avgCompletion += h.completion;
+                avgOnTime += h.onTime;
+            }
+            avgCompletion /= Object.keys(hospitals).length;
+            avgOnTime /= Object.keys(hospitals).length;
+
+            content += `<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                <div style="background: linear-gradient(135deg, #00A3E0, #003D7A); color: white; padding: 20px; border-radius: 8px; text-align: center;">
+                    <p style="font-size: 12px; margin: 0 0 8px 0; opacity: 0.9;">AVG COMPLETION</p>
+                    <p style="font-size: 28px; font-weight: 700; margin: 0;">${avgCompletion.toFixed(1)}%</p>
+                </div>
+                <div style="background: linear-gradient(135deg, #78C850, #5fa038); color: white; padding: 20px; border-radius: 8px; text-align: center;">
+                    <p style="font-size: 12px; margin: 0 0 8px 0; opacity: 0.9;">AVG ON-TIME</p>
+                    <p style="font-size: 28px; font-weight: 700; margin: 0;">${avgOnTime.toFixed(1)}%</p>
+                </div>
+            </div>`;
+
+            content += '<h3 style="font-size: 16px; font-weight: 700; color: #003D7A; margin-bottom: 16px;">All Facilities</h3>';
+            for (let code in hospitals) {
+                const h = hospitals[code];
+                content += `<p style="font-size: 14px; color: #374151; margin: 8px 0;"><strong>${code}:</strong> ${h.completion}% completion, ${h.onTime}% on-time</p>`;
+            }
+            content += '<button class="logout-btn" onclick="downloadReport(\'ALL\')" style="width: auto; margin-top: 24px;">📥 Download Report</button></div>';
+        } else {
+            const h = hospitals[type];
+            content = `<div class="stat-card"><h2 style="font-size: 24px; color: #003D7A; margin-bottom: 24px;">${h.name} Performance Report</h2>`;
+            content += `<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                <div style="background: #F9FAFB; padding: 16px; border-radius: 8px; border-left: 4px solid #00A3E0;">
+                    <p style="font-size: 12px; color: #6B7280; margin: 0 0 8px 0; font-weight: 600;">COMPLETION</p>
+                    <p style="font-size: 24px; font-weight: 700; color: #78C850; margin: 0;">${h.completion}%</p>
+                </div>
+                <div style="background: #F9FAFB; padding: 16px; border-radius: 8px; border-left: 4px solid #78C850;">
+                    <p style="font-size: 12px; color: #6B7280; margin: 0 0 8px 0; font-weight: 600;">ON-TIME</p>
+                    <p style="font-size: 24px; font-weight: 700; color: #00A3E0; margin: 0;">${h.onTime}%</p>
+                </div>
+            </div>`;
+            content += `<p style="font-size: 14px; color: #374151; margin: 12px 0;"><strong>Director:</strong> ${h.director}</p>`;
+            content += `<p style="font-size: 14px; color: #374151; margin: 12px 0;"><strong>Phone:</strong> ${h.phone}</p>`;
+            content += `<button class="logout-btn" onclick="downloadReport('${type}')" style="width: auto; margin-top: 24px;">📥 Download Report</button></div>`;
+        }
+        document.getElementById('reportContent').innerHTML = content;
+    }
+
+    function downloadReport(type) {
+        const h = hospitals[type] || {};
+        let text = 'MEDSTAR LOAD LEVELING TOOL - ENTERPRISE REPORT\n';
+        text += '='.repeat(60) + '\n\n';
+        text += type === 'ALL' ? 'SYSTEM-WIDE REPORT\n' : h.name + ' REPORT\n';
+        text += 'Generated: ' + new Date().toLocaleDateString() + '\n\n';
+        
+        if (type === 'ALL') {
+            text += 'SYSTEM OVERVIEW\n';
+            let avgCompletion = 0, avgOnTime = 0;
+            for (let code in hospitals) {
+                const h = hospitals[code];
+                avgCompletion += h.completion;
+                avgOnTime += h.onTime;
+            }
+            avgCompletion /= Object.keys(hospitals).length;
+            avgOnTime /= Object.keys(hospitals).length;
+            text += `Average Completion: ${avgCompletion.toFixed(1)}%\n`;
+            text += `Average On-Time: ${avgOnTime.toFixed(1)}%\n\n`;
+            text += 'FACILITY BREAKDOWN\n';
+            text += '-'.repeat(60) + '\n';
+            for (let code in hospitals) {
+                const h = hospitals[code];
+                text += `${code}: ${h.completion}% completion, ${h.onTime}% on-time\n`;
+            }
+        } else {
+            text += `${h.name}\n`;
+            text += h.address + '\n\n';
+            text += 'PERFORMANCE METRICS\n';
+            text += '-'.repeat(60) + '\n';
+            text += `Director: ${h.director}\n`;
+            text += `Phone: ${h.phone}\n`;
+            text += `Completion Rate: ${h.completion}%\n`;
+            text += `On-Time Rate: ${h.onTime}%\n`;
+        }
+
+        const blob = new Blob([text], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `MedStar-Report-${type}-${new Date().toISOString().split('T')[0]}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    }
+
+    function loadDirectory() {
+        let html = '';
+        directory.forEach(c => {
+            html += `
+                <div class="contact-card">
+                    <div class="contact-name">${c.name}</div>
+                    <div class="contact-title">${c.title}</div>
+                    <div class="contact-info">
+                        <p style="margin: 4px 0;">📞 ${c.phone}</p>
+                        <p style="margin: 4px 0;">✉️ ${c.email}</p>
+                    </div>
+                </div>
+            `;
+        });
+        document.getElementById('directoryList').innerHTML = html;
+    }
+
+    function handleFileUpload(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const hospitalCode = document.getElementById('uploadHospitalSelect').value;
+            const hospitalName = hospitals[hospitalCode].name;
+            const html = `
+                <div class="success-message show">
+                    <h4>✅ Upload Successful</h4>
+                    <p>📄 File: ${file.name}</p>
+                    <p>📦 Size: ${(file.size / 1024).toFixed(2)} KB</p>
+                    <p>🏥 Facility: MedStar ${hospitalName}</p>
+                    <p style="margin-top: 12px; color: #059669; font-weight: 600;">Ready for processing</p>
+                </div>
+            `;
+            document.getElementById('uploadStatus').innerHTML = html;
+        }
+    }
+
+    function initApp() {
+        loadDashboard();
+        showHospitalDetail('MWHC');
+        generateReport('ALL');
+        loadDirectory();
+    }
+
+    // Handle mobile sidebar toggle on click outside
+    document.addEventListener('click', function(event) {
+        const sidebar = document.getElementById('sidebar');
+        const menuToggle = document.querySelector('.menu-toggle');
+        if (window.innerWidth <= 768) {
+            if (!sidebar.contains(event.target) && !menuToggle.contains(event.target)) {
+                sidebar.classList.remove('open');
+            }
+        }
+    });
+
+    // Check if already logged in
+    if (sessionStorage.getItem('medstarLoggedIn') === 'true') {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('appScreen').classList.remove('hidden');
+        initApp();
+    }
+</script>
+
+</body>
+</html>
